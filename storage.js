@@ -8,7 +8,7 @@
    ========================================================= */
 
 const DB_NAME =
-    "ExperimentMarkerDB";
+    "ExperimentMarkerGeneralDB";
 
 
 const DB_VERSION =
@@ -28,7 +28,7 @@ const CURRENT_CASE_KEY =
 
 
 const LEGACY_STORAGE_KEY =
-    "experiment-marker-mobile-prototype-v1";
+    "experiment-marker-general-v1";
 
 
 /* =========================================================

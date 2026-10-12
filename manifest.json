@@ -1,6 +1,6 @@
 {
-  "name": "Experiment Marker",
-  "short_name": "Marker",
+  "name": "Experiment Marker General",
+  "short_name": "Marker General",
   "description": "Local-first experimental event recording tool.",
   "start_url": "./",
   "scope": "./",
