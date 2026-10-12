@@ -1,0 +1,1145 @@
+:root {
+    --accent: #ff4b4b;
+    --accent-selected: #c9343c;
+
+    --background: #ffffff;
+    --surface: #f7f7f8;
+
+    --text: #24242d;
+    --muted: #868690;
+
+    --border: rgba(30, 30, 40, 0.14);
+
+    --radius: 14px;
+}
+
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+    margin: 0;
+
+    background: var(--background);
+    color: var(--text);
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+
+button,
+input {
+    font: inherit;
+}
+
+
+button {
+    touch-action: manipulation;
+}
+
+
+.app {
+    width: min(760px, 100%);
+
+    margin: 0 auto;
+
+    padding:
+        max(24px, env(safe-area-inset-top))
+        18px
+        max(40px, env(safe-area-inset-bottom));
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 30px;
+}
+
+
+.eyebrow,
+.small-label {
+    font-size: 0.68rem;
+    font-weight: 750;
+
+    letter-spacing: 0.10em;
+
+    color: var(--muted);
+}
+
+
+h1 {
+    margin: 5px 0 0;
+
+    font-size: 2rem;
+
+    letter-spacing: -0.04em;
+}
+
+
+.status-badge {
+    margin-top: 3px;
+
+    font-size: 0.72rem;
+    font-weight: 750;
+
+    letter-spacing: 0.08em;
+}
+
+
+/* =========================================================
+   COMMON
+   ========================================================= */
+
+.hidden {
+    display: none !important;
+}
+
+
+.panel,
+.event-console,
+.complete-card {
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        var(--radius);
+
+    padding:
+        18px;
+}
+
+
+label {
+    display: block;
+
+    margin:
+        16px
+        0
+        7px;
+
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+
+label:first-child {
+    margin-top: 0;
+}
+
+
+input {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding:
+        0
+        14px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        11px;
+
+    background:
+        var(--surface);
+
+    color:
+        var(--text);
+
+    outline:
+        none;
+
+    font-size:
+        16px;
+}
+
+
+input:focus {
+    border-color:
+        var(--accent);
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.primary-button,
+.secondary-button {
+    width: 100%;
+
+    min-height: 50px;
+
+    border-radius: 11px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.primary-button {
+    margin-top: 22px;
+
+    border: none;
+
+    background:
+        var(--accent);
+
+    color:
+        white;
+}
+
+
+.secondary-button {
+    margin-top: 18px;
+
+    border: 1px solid
+        var(--border);
+
+    background:
+        transparent;
+
+    color:
+        var(--text);
+}
+
+
+.utility-button {
+    min-height: 44px;
+
+    padding:
+        0
+        14px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        10px;
+
+    background:
+        var(--surface);
+
+    color:
+        var(--text);
+
+    font-weight:
+        650;
+
+    cursor:
+        pointer;
+}
+
+
+.utility-button:disabled {
+    opacity:
+        0.38;
+
+    cursor:
+        default;
+}
+
+
+.mini-button {
+    min-height: 36px;
+
+    padding:
+        0
+        12px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        9px;
+
+    background:
+        var(--surface);
+
+    color:
+        var(--text);
+
+    font-size:
+        0.78rem;
+
+    font-weight:
+        650;
+
+    cursor:
+        pointer;
+}
+
+
+.mini-button:active,
+.utility-button:active,
+.primary-button:active,
+.secondary-button:active {
+    transform:
+        scale(0.98);
+}
+
+
+/* =========================================================
+   RUNNING
+   ========================================================= */
+
+.case-strip {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom:
+        14px;
+
+    padding:
+        0 2px;
+}
+
+
+.case-id {
+    margin-top:
+        3px;
+
+    font-size:
+        1.1rem;
+
+    font-weight:
+        720;
+}
+
+
+.count {
+    margin-top:
+        3px;
+
+    font-size:
+        1.05rem;
+
+    font-weight:
+        700;
+}
+
+
+.align-right {
+    text-align:
+        right;
+}
+
+
+.section-title {
+    margin-bottom:
+        16px;
+
+    font-size:
+        1.35rem;
+
+    font-weight:
+        760;
+
+    letter-spacing:
+        -0.025em;
+}
+
+
+.compact-title {
+    margin:
+        3px
+        0
+        0;
+
+    font-size:
+        1.12rem;
+}
+
+
+/* =========================================================
+   EVENT GRID
+   ========================================================= */
+
+.event-grid {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        10px;
+
+    margin-top:
+        18px;
+}
+
+
+.event-button {
+    min-height:
+        58px;
+
+    padding:
+        8px;
+
+    border:
+        none;
+
+    border-radius:
+        12px;
+
+    background:
+        var(--accent);
+
+    color:
+        white;
+
+    font-size:
+        0.95rem;
+
+    font-weight:
+        680;
+
+    cursor:
+        pointer;
+
+    transition:
+        transform 70ms ease,
+        background 100ms ease;
+}
+
+
+.event-button:active {
+    transform:
+        scale(0.97);
+}
+
+
+.event-button.selected {
+    background:
+        var(--accent-selected);
+}
+
+
+/* =========================================================
+   LAST RECORDED
+   ========================================================= */
+
+.last-recorded {
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    gap:
+        14px;
+
+    margin-top:
+        18px;
+
+    padding-top:
+        14px;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+.last-event-name {
+    margin-top:
+        3px;
+
+    font-weight:
+        700;
+}
+
+
+.elapsed {
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+
+    font-weight:
+        680;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+/* =========================================================
+   COLLAPSIBLE SHELLS
+   ========================================================= */
+
+.timeline-shell,
+.utility-shell {
+    margin-top:
+        14px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        var(--radius);
+
+    overflow:
+        hidden;
+}
+
+
+.timeline-shell summary,
+.utility-shell summary {
+    min-height:
+        50px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    padding:
+        0 16px;
+
+    font-weight:
+        680;
+
+    cursor:
+        pointer;
+}
+
+
+.utility-content {
+    padding:
+        0
+        14px
+        14px;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+/* =========================================================
+   CALIBRATION
+   ========================================================= */
+
+.utility-content {
+    padding:
+        16px
+        14px
+        16px;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+.calibration-grid {
+    display: grid;
+
+    grid-template-columns:
+        1fr;
+
+    gap:
+        16px;
+}
+
+
+.calibration-grid > div {
+    display: flex;
+
+    flex-direction: column;
+
+    gap:
+        8px;
+}
+
+
+.calibration-grid label {
+    margin:
+        0;
+
+    font-size:
+        0.82rem;
+
+    font-weight:
+        650;
+
+    line-height:
+        1.25;
+}
+
+
+.calibration-actions {
+    display: flex;
+
+    gap:
+        8px;
+
+    margin-top:
+        16px;
+}
+
+
+.calibration-actions
+.utility-button:first-child {
+    flex:
+        1;
+}
+
+
+.calibration-status {
+    margin-top:
+        14px;
+
+    padding:
+        11px
+        12px;
+
+    border-radius:
+        10px;
+
+    background:
+        var(--surface);
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.8rem;
+
+    line-height:
+        1.45;
+}
+
+/* =========================================================
+   RUNNING CORRECTIONS
+   ========================================================= */
+
+.correction-actions {
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap:
+        8px;
+
+    margin-top:
+        10px;
+}
+
+
+/* =========================================================
+   TIMELINE
+   ========================================================= */
+
+.timeline {
+    padding:
+        0
+        14px
+        14px;
+}
+
+
+.timeline-empty {
+    padding:
+        10px 0;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.85rem;
+}
+
+
+.timeline-item {
+    padding:
+        13px 0;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+.timeline-main-row {
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    gap:
+        16px;
+}
+
+
+.timeline-main {
+    min-width:
+        0;
+}
+
+
+.timeline-item.removed
+.timeline-main-row {
+    opacity:
+        0.52;
+}
+
+
+.timeline-name-row {
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        7px;
+}
+
+
+.timeline-name {
+    font-weight:
+        650;
+
+    overflow-wrap:
+        anywhere;
+}
+
+
+.status-chip {
+    padding:
+        2px 6px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        999px;
+
+    font-size:
+        0.61rem;
+
+    font-weight:
+        750;
+
+    letter-spacing:
+        0.06em;
+}
+
+
+.timeline-meta {
+    margin-top:
+        4px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.75rem;
+
+    line-height:
+        1.5;
+}
+
+
+.timeline-time {
+    flex:
+        0 0 auto;
+
+    font-family:
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        monospace;
+
+    font-size:
+        0.82rem;
+
+    font-variant-numeric:
+        tabular-nums;
+}
+
+
+.timeline-actions {
+    display:
+        flex;
+
+    flex-wrap:
+        wrap;
+
+    gap:
+        7px;
+
+    margin-top:
+        10px;
+}
+
+
+/* =========================================================
+   COMPLETE
+   ========================================================= */
+
+.complete-card {
+    margin-bottom:
+        14px;
+}
+
+
+.complete-case {
+    margin-top:
+        5px;
+
+    font-size:
+        1.45rem;
+
+    font-weight:
+        760;
+}
+
+
+.complete-summary {
+    margin-top:
+        8px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.86rem;
+}
+
+
+.complete-section-heading {
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-end;
+
+    gap:
+        16px;
+
+    margin-top:
+        26px;
+}
+
+
+.qc-hint {
+    max-width:
+        290px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.76rem;
+
+    line-height:
+        1.45;
+
+    text-align:
+        right;
+}
+
+
+.finalize-section {
+    margin-top:
+        28px;
+
+    padding-top:
+        22px;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+.export-button {
+    margin-top:
+        14px;
+}
+
+
+.export-note {
+    margin-top:
+        9px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.75rem;
+
+    line-height:
+        1.45;
+}
+
+
+.new-case-button {
+    margin-top:
+        22px;
+}
+
+
+/* =========================================================
+   WIDER SCREENS
+   ========================================================= */
+
+@media (min-width: 700px) {
+
+    .event-grid {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+
+    .calibration-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap:
+            12px;
+    }
+
+}
+
+
+/* =========================================================
+   PHONE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .complete-section-heading {
+        display:
+            block;
+    }
+
+
+    .qc-hint {
+        margin-top:
+            6px;
+
+        max-width:
+            none;
+
+        text-align:
+            left;
+    }
+
+}
+
+/* =========================================================
+   CASE LIBRARY
+   ========================================================= */
+
+.library-shell {
+    margin-top: 18px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        var(--radius);
+
+    overflow:
+        hidden;
+}
+
+
+.library-shell summary {
+    min-height:
+        50px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    gap:
+        6px;
+
+    padding:
+        0 16px;
+
+    font-weight:
+        680;
+
+    cursor:
+        pointer;
+}
+
+
+.case-library {
+    padding:
+        0
+        14px
+        14px;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+.library-empty {
+    padding:
+        16px 0
+        4px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.82rem;
+}
+
+
+.library-item {
+    padding:
+        14px 0;
+
+    border-bottom:
+        1px solid
+        var(--border);
+}
+
+
+.library-item:last-child {
+    border-bottom:
+        none;
+}
+
+
+.library-top-row {
+    display:
+        flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        flex-start;
+
+    gap:
+        14px;
+}
+
+
+.library-case-id {
+    font-weight:
+        720;
+}
+
+
+.library-meta {
+    margin-top:
+        4px;
+
+    color:
+        var(--muted);
+
+    font-size:
+        0.75rem;
+
+    line-height:
+        1.45;
+}
+
+
+.library-actions {
+    display:
+        flex;
+
+    gap:
+        7px;
+
+    margin-top:
+        11px;
+}
+
+
+.finalize-divider {
+    margin:
+        22px
+        0;
+
+    border-top:
+        1px solid
+        var(--border);
+}
+
+
+#libraryBackupStatus {
+    text-align: center;
+    margin: 12px 0 0;
+    padding: 0 8px 12px;
+}
+
+#backupLibraryButton,
+#exportAllCsvButton {
+    display: block;
+    width: calc(100% - 38px);
+    margin-inline: auto;
+}
