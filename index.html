@@ -1,1194 +1,199 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
-<head>
-
-    <meta charset="UTF-8">
-
-
-
-    <meta
-
-        name="viewport"
-
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-
-    >
-
-
-
-    <title>Experiment Marker</title>
-
-    <meta
-
-    name="theme-color"
-
-    content="#ff4b4b"
-
-    >
-
-    <link
-
-    rel="manifest"
-
-    href="manifest.json"
-
-    >
-
-    <link
-
-        rel="stylesheet"
-
-        href="style.css"
-
-    >
-
-</head>
-
-
-
-<body>
-
-
-
-<main class="app">
-
-
-
-    <header class="header">
-
-
-
-        <div>
-
-            <div class="eyebrow">
-
-                EXPERIMENT MARKER
-
-            </div>
-
-
-
-            <h1>
-
-                Mobile Prototype
-
-            </h1>
-
-        </div>
-
-
-
-        <div
-
-            id="statusBadge"
-
-            class="status-badge"
-
-        >
-
-            READY
-
-        </div>
-
-
-
-    </header>
-
-
-
-
-
-    <!-- ===================================================
-
-         READY
-
-         \=================================================== -->
-
-
-
-    <section
-
-        id="readyView"
-
-        class="view"
-
-    >
-
-
-
-        <div class="panel">
-
-
-
-            <label for="caseIdInput">
-
-                Case ID
-
-            </label>
-
-
-
-            <input
-
-                id="caseIdInput"
-
-                type="text"
-
-                placeholder="e.g. LC_001"
-
-                autocomplete="off"
-
-            >
-
-
-
-
-
-            <label for="experimentTypeInput">
-
-                Experiment type
-
-            </label>
-
-
-
-            <input
-
-                id="experimentTypeInput"
-
-                type="text"
-
-                value="LC_multi"
-
-                autocomplete="off"
-
-            >
-
-
-
-
-
-            <button
-
-                id="startButton"
-
-                class="primary-button"
-
-                type="button"
-
-            >
-
-                START EXPERIMENT
-
-            </button>
-
-
-
-        </div>
-
-<details
-
-    class="library-shell"
-
-    open
-
->
-
-
-
-    <summary>
-
-        Case Library
-
-        <span id="libraryCount"></span>
-
-    </summary>
-
-
-
-    <div
-
-        id="caseLibrary"
-
-        class="case-library"
-
-    >
-
-    </div>
-
-    <button
-        id="exportAllCsvButton"
-        class="secondary-button"
-        type="button"
-    >
-        Export All CSV (.ZIP)
-    </button>
-
-    <button
-        id="backupLibraryButton"
-        class="secondary-button export-button"
-        type="button"
-    >
-        Back Up Case Library
-    </button>
-
-    <div
-        id="libraryBackupStatus"
-        class="export-note"
-    >
-        Archived cases only. The current working case is not included.
-    </div>
-
-
-
-</details>
-
-    </section>
-
-
-
-
-
-    <!-- ===================================================
-
-         RUNNING
-
-         \=================================================== -->
-
-
-
-    <section
-
-        id="runningView"
-
-        class="view hidden"
-
-    >
-
-
-
-        <div class="case-strip">
-
-
-
-            <div>
-
-                <div class="small-label">
-
-                    CASE
-
-                </div>
-
-
-
-                <div
-
-                    id="runningCaseId"
-
-                    class="case-id"
-
-                >
-
-                </div>
-
-            </div>
-
-
-
-            <div class="align-right">
-
-                <div class="small-label">
-
-                    ACTIVE EVENTS
-
-                </div>
-
-
-
-                <div
-
-                    id="eventCount"
-
-                    class="count"
-
-                >
-
-                    0
-
-                </div>
-
-            </div>
-
-
-
-        </div>
-
-
-
-
-
-        <div class="event-console">
-
-
-
-            <div class="section-title">
-
-                Mark Event
-
-            </div>
-
-
-
-            <label for="eventNoteInput">
-
-                Optional note
-
-            </label>
-
-
-
-            <input
-
-                id="eventNoteInput"
-
-                type="text"
-
-                placeholder="e.g. difficult trocar, artifact"
-
-                autocomplete="off"
-
-            >
-
-
-
-
-
-            <div
-
-                id="eventGrid"
-
-                class="event-grid"
-
-            >
-
-            </div>
-
-
-
-
-
-            <div
-
-                id="lastRecorded"
-
-                class="last-recorded hidden"
-
-            >
-
-
-
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        <title>Experiment Marker</title>
+        <meta name="theme-color" content="#ff4b4b">
+        <link rel="manifest" href="manifest.json">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <main class="app">
+            <header class="header">
                 <div>
-
-                    <div class="small-label">
-
-                        LAST ACTIVE EVENT
-
-                    </div>
-
-
-
-                    <div
-
-                        id="lastEventName"
-
-                        class="last-event-name"
-
-                    >
-
-                    </div>
-
+                    <div class="eyebrow">EXPERIMENT MARKER</div>
+                    <h1>Mobile Prototype</h1>
                 </div>
+                <div id="statusBadge" class="status-badge">READY</div>
+            </header>
 
-
-
-                <div
-
-                    id="lastEventElapsed"
-
-                    class="elapsed"
-
-                >
-
+            <!-- =================================================== READY =================================================== -->
+            <section id="readyView" class="view">
+                <div class="panel">
+                    <label for="caseIdInput">Case ID</label>
+                    <input id="caseIdInput" type="text" placeholder="e.g. LC_001" autocomplete="off">
+                    <label for="experimentTypeInput">Experiment type</label>
+                    <input id="experimentTypeInput" type="text" value="LC_multi" autocomplete="off">
+                    <button id="startButton" class="primary-button" type="button">START EXPERIMENT</button>
                 </div>
+                <details class="library-shell" open>
+                    <summary>
+                        Case Library
+                        <span id="libraryCount"></span>
+                    </summary>
+                    <div id="caseLibrary" class="case-library"></div>
+                    <button id="exportAllCsvButton" class="secondary-button" type="button">Export All CSV (.ZIP)</button>
+                    <button id="backupLibraryButton" class="secondary-button export-button" type="button">Back Up Case Library</button>
+                    <div id="libraryBackupStatus" class="export-note">Archived cases only. The current working case is not included.</div>
+                </details>
+            </section>
 
-
-
-            </div>
-
-
-
-        </div>
-
-
-
-
-
-        <!-- Calibration -->
-
-
-
-        <details class="utility-shell">
-
-
-
-            <summary>
-
-                Time Calibration
-
-            </summary>
-
-
-
-            <div class="utility-content">
-
-
-
-                <div class="calibration-grid">
-
-
-
+            <!-- =================================================== RUNNING =================================================== -->
+            <section id="runningView" class="view hidden">
+                <div class="case-strip">
                     <div>
-
-
-
-                        <label for="runningReferenceTime">
-
-                            Reference clock
-
-                        </label>
-
-
-
-                        <input
-
-                            id="runningReferenceTime"
-
-                            type="text"
-
-                            inputmode="decimal"
-
-                            placeholder="14:32:18.000"
-
-                            autocomplete="off"
-
-                        >
-
-
-
+                        <div class="small-label">CASE</div>
+                        <div id="runningCaseId" class="case-id"></div>
                     </div>
+                    <div class="align-right">
+                        <div class="small-label">ACTIVE EVENTS</div>
+                        <div id="eventCount" class="count">0</div>
+                    </div>
+                </div>
+                <div class="event-console">
+                    <div class="section-title">Mark Event</div>
+                    <label for="eventNoteInput">Optional note</label>
+                    <input id="eventNoteInput" type="text" placeholder="e.g. difficult trocar, artifact" autocomplete="off">
+                    <div id="eventGrid" class="event-grid"></div>
+                    <div id="lastRecorded" class="last-recorded hidden">
+                        <div>
+                            <div class="small-label">LAST ACTIVE EVENT</div>
+                            <div id="lastEventName" class="last-event-name"></div>
+                        </div>
+                        <div id="lastEventElapsed" class="elapsed"></div>
+                    </div>
+                </div>
+                <!-- Calibration -->
+                <details class="utility-shell">
+                    <summary>Time Calibration</summary>
+                    <div class="utility-content">
+                        <div class="calibration-grid">
+                            <div>
+                                <label for="runningReferenceTime">Reference clock</label>
+                                <div class="calibration-time-field">
+                                    <input id="runningReferenceTime" class="calibration-time-input" type="text" placeholder="HH:MM:SS" autocomplete="off" spellcheck="false">
+                                    <button class="calibration-time-trigger" type="button" data-time-target="runningReferenceTime" aria-label="Open time picker">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <path d="M12 7v5l3 2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="runningEegTime">EEG / device clock</label>
+                                <div class="calibration-time-field">
+                                    <input id="runningEegTime" class="calibration-time-input" type="text" placeholder="HH:MM:SS" autocomplete="off" spellcheck="false">
+                                    <button class="calibration-time-trigger" type="button" data-time-target="runningEegTime" aria-label="Open time picker">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <path d="M12 7v5l3 2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="calibration-actions">
+                            <button id="runningApplyCalibration" class="utility-button" type="button">Apply Calibration</button>
+                            <button id="runningClearCalibration" class="utility-button" type="button">Clear</button>
+                        </div>
+                        <div id="runningCalibrationStatus" class="calibration-status">Not calibrated</div>
+                    </div>
+                </details>
+                <!-- Timeline -->
+                <details class="timeline-shell">
+                    <summary>Event Timeline</summary>
+                    <div id="timeline" class="timeline"></div>
+                </details>
+                <div class="correction-actions">
+                    <button id="undoButton" class="utility-button" type="button">Undo Last Event</button>
+                    <button id="restoreButton" class="utility-button" type="button">Restore</button>
+                </div>
+                <button id="endButton" class="secondary-button" type="button">End Experiment</button>
+            </section>
 
-
-
-
-
+            <!-- =================================================== COMPLETE =================================================== -->
+            <section id="completeView" class="view hidden">
+                <div class="complete-card">
+                    <div class="small-label">RECORDING COMPLETE</div>
+                    <div id="completeCaseId" class="complete-case"></div>
+                    <div id="completeSummary" class="complete-summary"></div>
+                </div>
+                <!-- Calibration -->
+                <details class="utility-shell">
+                    <summary>Time Calibration</summary>
+                    <div class="utility-content">
+                        <div class="calibration-grid">
+                            <div>
+                                <label for="completeReferenceTime">Reference clock</label>
+                                <div class="calibration-time-field">
+                                    <input id="completeReferenceTime" class="calibration-time-input" type="text" placeholder="HH:MM:SS" autocomplete="off" spellcheck="false">
+                                    <button class="calibration-time-trigger" type="button" data-time-target="completeReferenceTime" aria-label="Open time picker">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <path d="M12 7v5l3 2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="completeEegTime">EEG / device clock</label>
+                                <div class="calibration-time-field">
+                                    <input id="completeEegTime" class="calibration-time-input" type="text" placeholder="HH:MM:SS" autocomplete="off" spellcheck="false">
+                                    <button class="calibration-time-trigger" type="button" data-time-target="completeEegTime" aria-label="Open time picker">
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <circle cx="12" cy="12" r="9"></circle>
+                                            <path d="M12 7v5l3 2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="calibration-actions">
+                            <button id="completeApplyCalibration" class="utility-button" type="button">Apply Calibration</button>
+                            <button id="completeClearCalibration" class="utility-button" type="button">Clear</button>
+                        </div>
+                        <div id="completeCalibrationStatus" class="calibration-status">Not calibrated</div>
+                    </div>
+                </details>
+                <!-- QC -->
+                <div class="complete-section-heading">
                     <div>
-
-
-
-                        <label for="runningEegTime">
-
-                            EEG / device clock
-
-                        </label>
-
-
-
-                        <input
-
-                            id="runningEegTime"
-
-                            type="text"
-
-                            inputmode="decimal"
-
-                            placeholder="14:32:16.000"
-
-                            autocomplete="off"
-
-                        >
-
-
-
+                        <div class="small-label">QUALITY CONTROL</div>
+                        <div class="section-title compact-title">Event Review</div>
                     </div>
-
-
-
+                    <div class="qc-hint">Rename, remove or restore without rewriting event time.</div>
                 </div>
-
-
-
-
-
-                <div class="calibration-actions">
-
-
-
-                    <button
-
-                        id="runningApplyCalibration"
-
-                        class="utility-button"
-
-                        type="button"
-
-                    >
-
-                        Apply Calibration
-
-                    </button>
-
-
-
-                    <button
-
-                        id="runningClearCalibration"
-
-                        class="utility-button"
-
-                        type="button"
-
-                    >
-
-                        Clear
-
-                    </button>
-
-
-
+                <details class="timeline-shell" open>
+                    <summary>Recorded Events</summary>
+                    <div id="completeTimeline" class="timeline"></div>
+                </details>
+                <!-- Export -->
+                <div class="finalize-section">
+                    <div class="small-label">CASE LIBRARY</div>
+                    <div class="section-title compact-title">Archive</div>
+                    <button id="saveLibraryButton" class="primary-button export-button" type="button">SAVE TO CASE LIBRARY</button>
+                    <div id="librarySaveStatus" class="export-note">Not saved to Case Library.</div>
+                    <div class="finalize-divider"></div>
+                    <div class="small-label">EXPORT</div>
+                    <button id="exportCsvButton" class="secondary-button export-button" type="button">Export CSV</button>
                 </div>
-
-
-
-
-
-                <div
-
-                    id="runningCalibrationStatus"
-
-                    class="calibration-status"
-
-                >
-
-                    Not calibrated
-
-                </div>
-
-
-
-            </div>
-
-
-
-        </details>
-
-
-
-
-
-        <!-- Timeline -->
-
-
-
-        <details class="timeline-shell">
-
-
-
-            <summary>
-
-                Event Timeline
-
-            </summary>
-
-
-
-            <div
-
-                id="timeline"
-
-                class="timeline"
-
-            >
-
-            </div>
-
-
-
-        </details>
-
-
-
-
-
-        <div class="correction-actions">
-
-
-
-            <button
-
-                id="undoButton"
-
-                class="utility-button"
-
-                type="button"
-
-            >
-
-                Undo Last Event
-
-            </button>
-
-
-
-            <button
-
-                id="restoreButton"
-
-                class="utility-button"
-
-                type="button"
-
-            >
-
-                Restore
-
-            </button>
-
-
-
-        </div>
-
-
-
-
-
-        <button
-
-            id="endButton"
-
-            class="secondary-button"
-
-            type="button"
-
-        >
-
-            End Experiment
-
-        </button>
-
-
-
-    </section>
-
-
-
-
-
-    <!-- ===================================================
-
-         COMPLETE
-
-         \=================================================== -->
-
-
-
-    <section
-
-        id="completeView"
-
-        class="view hidden"
-
-    >
-
-
-
-        <div class="complete-card">
-
-
-
-            <div class="small-label">
-
-                RECORDING COMPLETE
-
-            </div>
-
-
-
-            <div
-
-                id="completeCaseId"
-
-                class="complete-case"
-
-            >
-
-            </div>
-
-
-
-            <div
-
-                id="completeSummary"
-
-                class="complete-summary"
-
-            >
-
-            </div>
-
-
-
-        </div>
-
-
-
-
-
-        <!-- Calibration -->
-
-
-
-        <details class="utility-shell">
-
-
-
-            <summary>
-
-                Time Calibration
-
-            </summary>
-
-
-
-            <div class="utility-content">
-
-
-
-                <div class="calibration-grid">
-
-
-
-                    <div>
-
-
-
-                        <label for="completeReferenceTime">
-
-                            Reference clock
-
-                        </label>
-
-
-
-                        <input
-
-                            id="completeReferenceTime"
-
-                            type="text"
-
-                            inputmode="decimal"
-
-                            placeholder="14:32:18.000"
-
-                            autocomplete="off"
-
-                        >
-
-
-
-                    </div>
-
-
-
-
-
-                    <div>
-
-
-
-                        <label for="completeEegTime">
-
-                            EEG / device clock
-
-                        </label>
-
-
-
-                        <input
-
-                            id="completeEegTime"
-
-                            type="text"
-
-                            inputmode="decimal"
-
-                            placeholder="14:32:16.000"
-
-                            autocomplete="off"
-
-                        >
-
-
-
-                    </div>
-
-
-
-                </div>
-
-
-
-
-
-                <div class="calibration-actions">
-
-
-
-                    <button
-
-                        id="completeApplyCalibration"
-
-                        class="utility-button"
-
-                        type="button"
-
-                    >
-
-                        Apply Calibration
-
-                    </button>
-
-
-
-                    <button
-
-                        id="completeClearCalibration"
-
-                        class="utility-button"
-
-                        type="button"
-
-                    >
-
-                        Clear
-
-                    </button>
-
-
-
-                </div>
-
-
-
-
-
-                <div
-
-                    id="completeCalibrationStatus"
-
-                    class="calibration-status"
-
-                >
-
-                    Not calibrated
-
-                </div>
-
-
-
-            </div>
-
-
-
-        </details>
-
-
-
-
-
-        <!-- QC -->
-
-
-
-        <div class="complete-section-heading">
-
-
-
-            <div>
-
-                <div class="small-label">
-
-                    QUALITY CONTROL
-
-                </div>
-
-
-
-                <div class="section-title compact-title">
-
-                    Event Review
-
-                </div>
-
-            </div>
-
-
-
-            <div class="qc-hint">
-
-                Rename, remove or restore without rewriting event time.
-
-            </div>
-
-
-
-        </div>
-
-
-
-
-
-        <details
-
-            class="timeline-shell"
-
-            open
-
-        >
-
-
-
-            <summary>
-
-                Recorded Events
-
-            </summary>
-
-
-
-            <div
-
-                id="completeTimeline"
-
-                class="timeline"
-
-            >
-
-            </div>
-
-
-
-        </details>
-
-
-
-
-
-        <!-- Export -->
-
-
-
-        <div class="finalize-section">
-
-
-
-    <div class="small-label">
-
-        CASE LIBRARY
-
-    </div>
-
-
-
-    <div class="section-title compact-title">
-
-        Archive
-
-    </div>
-
-
-
-
-
-    <button
-
-        id="saveLibraryButton"
-
-        class="primary-button export-button"
-
-        type="button"
-
-    >
-
-        SAVE TO CASE LIBRARY
-
-    </button>
-
-
-
-
-
-    <div
-
-        id="librarySaveStatus"
-
-        class="export-note"
-
-    >
-
-        Not saved to Case Library.
-
-    </div>
-
-
-
-
-
-    <div class="finalize-divider"></div>
-
-
-
-
-
-    <div class="small-label">
-
-        EXPORT
-
-    </div>
-
-
-
-    <button
-
-        id="exportCsvButton"
-
-        class="secondary-button export-button"
-
-        type="button"
-
-    >
-
-        Export CSV
-
-    </button>
-
-
-
-</div>
-
-
-
-
-
-<button
-
-    id="newCaseButton"
-
-    class="secondary-button new-case-button"
-
-    type="button"
-
->
-
-    Discard Case
-
-</button>
-
-
-
-    </section>
-
-
-
-</main>
-
-
-
-<script src="storage.js"></script>
-
-<script src="app.js"></script>
-
-
-
-<script>
-
-    if ("serviceWorker" in navigator) {
-
-
-
-        window.addEventListener(
-
-            "load",
-
-            () => {
-
-
-
-                navigator.serviceWorker
-
-                    .register(
-
-                        "./service-worker.js"
-
-                    )
-
-                    .then(
-
-                        registration => {
-
-
-
-                            console.log(
-
-                                "Experiment Marker service worker registered:",
-
-                                registration.scope
-
-                            );
-
-                        }
-
-                    )
-
-                    .catch(
-
-                        error => {
-
-
-
-                            console.error(
-
-                                "Service worker registration failed:",
-
-                                error
-
-                            );
-
-                        }
-
-                    );
-
+                <button id="newCaseButton" class="secondary-button new-case-button" type="button">Discard Case</button>
+            </section>
+        </main>
+        <script src="storage.js"></script>
+        <script src="app.js"></script>
+        <script>
+            if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+                window.addEventListener("load", () => {
+                    navigator.serviceWorker.register("./service-worker.js").then((registration) => {
+                        console.log("Experiment Marker service worker registered:", registration.scope);
+                    }).catch((error) => {
+                        console.error("Service worker registration failed:", error);
+                    });
+                });
             }
-
-        );
-
-    }
-
-</script>
-
-
-
-</body>
-
+        </script>
+    </body>
 </html>
