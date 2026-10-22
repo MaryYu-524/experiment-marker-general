@@ -103,6 +103,126 @@ input:focus {
     border-color: var(--accent);
 }
 
+/* General · READY preset selection and read-only event preview */
+.preset-select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 44px 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background-color: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-size: 16px;
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2324242d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+}
+
+.preset-select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.preset-preview {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 11px;
+    background: var(--surface);
+}
+
+.preset-preview-summary {
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+.preset-preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.preset-preview-tag {
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--background);
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+}
+
+/* General · Custom preset editor. Mobile-first, offline, no dependencies. */
+.preset-actions { display: flex; gap: 9px; margin-top: 10px; }
+.preset-actions .utility-button { flex: 1; min-width: 0; font-size: 0.82rem; }
+.preset-editor-open { overflow: hidden; }
+.preset-editor-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+    padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+    background: rgba(17, 19, 25, 0.58);
+}
+.preset-editor-dialog {
+    width: min(540px, 100%); max-height: 100%; overflow-y: auto;
+    background: var(--background); color: var(--text);
+    border-radius: 18px; padding: 20px;
+    overscroll-behavior: contain; box-shadow: 0 22px 60px rgba(0,0,0,.22);
+}
+.preset-editor-heading, .preset-editor-preview-heading, .preset-editor-footer, .preset-editor-main-actions {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.preset-editor-heading h2 { margin: 5px 0 2px; font-size: 1.32rem; }
+.preset-icon-button {
+    width: 38px; min-width: 38px; height: 38px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--surface); color: var(--text);
+    font-size: 1.4rem; cursor: pointer;
+}
+.preset-add-form { margin-top: 8px; }
+.preset-add-row { display: flex; gap: 9px; }
+.preset-add-row input { min-width: 0; flex: 1; }
+.preset-add-row .utility-button { white-space: nowrap; }
+.preset-editor-preview-heading { margin-top: 24px; }
+.preset-editor-preview-heading strong { font-size: 0.95rem; }
+.preset-editor-hint { font-size: 0.75rem; line-height: 1.5; color: var(--muted); margin: 8px 0; }
+.preset-editor-events { display: flex; flex-direction: column; gap: 8px; margin-top: 11px; }
+.preset-event-item {
+    display: flex; align-items: center; gap: 5px; min-height: 52px; padding: 5px 6px;
+    border: 1px solid var(--border); border-radius: 11px; background: var(--surface);
+}
+.preset-event-name { flex: 1; min-width: 0; font-size: 0.82rem; font-weight: 650; overflow-wrap: anywhere; padding: 3px; }
+.preset-drag-handle {
+    width: 34px; min-width: 34px; min-height: 38px; border: none; border-radius: 8px;
+    background: transparent; color: var(--muted); font-size: 1.5rem;
+    cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.preset-row-action {
+    width: 31px; min-width: 31px; height: 36px; padding: 0; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--background); color: var(--text);
+    font-size: 1rem; font-weight: 650; cursor: pointer;
+}
+.preset-row-action:disabled { opacity: .3; cursor: default; }
+.preset-inline-input { flex: 1; min-width: 0; min-height: 38px; padding: 0 8px; font-size: 16px; }
+.preset-drag-origin { opacity: 0.55; border-color: var(--accent); }
+.preset-drop-target { outline: 2px solid var(--accent); outline-offset: 1px; }
+.preset-empty-message { padding: 14px; text-align: center; color: var(--muted); font-size: 0.82rem; }
+.preset-editor-error { margin-top: 14px; padding: 10px; color: #9d182b; background: #fff0f1; border-radius: 9px; font-size: 0.8rem; }
+.preset-editor-footer { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 20px; align-items: flex-end; }
+.preset-editor-main-actions { margin-left: auto; }
+.preset-editor-main-actions .primary-button { margin-top: 0; width: auto; min-width: 120px; padding: 0 14px; }
+.preset-danger-button { border: none; background: transparent; color: #b6202a; font-size: 0.8rem; font-weight: 700; padding: 10px 0; cursor: pointer; }
+@media (max-width: 400px) {
+    .preset-editor-dialog { padding: 14px; }
+    .preset-event-item { gap: 3px; padding: 4px; }
+    .preset-row-action { width: 29px; min-width: 29px; }
+    .preset-editor-footer { flex-wrap: wrap; }
+}
+
 /* ========================================================= BUTTONS ========================================================= */
 
 .primary-button, .secondary-button {

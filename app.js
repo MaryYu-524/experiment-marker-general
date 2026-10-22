@@ -20,6 +20,26 @@ const DEFAULT_EVENTS = [
     "trocar3",
     "empty_event",
 ];
+// General only: add or edit preset definitions here. IDs must remain stable once used in archived cases.
+const EVENT_PRESETS = {
+    lc_standard: {
+        name: "LC Standard",
+        description: "Standard LC event markers",
+        events: [
+            "induce", "muscle relaxant", "intubation", "drape_out",
+            "surgery_ready", "needle", "gas_start", "gas_ready",
+            "trocar1", "trocar2", "trocar3", "empty_event",
+        ],
+    },
+    demo_test: {
+        name: "Demo / Test",
+        description: "Temporary example; replace after the study protocol is finalized",
+        events: ["baseline", "stimulus_on", "stimulus_off", "response"],
+    },
+};
+const CUSTOM_PRESETS_KEY = "experiment-marker-general-custom-presets-v1";
+const MAX_PRESET_EVENTS = 40;
+
 const CSV_COLUMNS = [
     "case_id",
     "experiment_type",
@@ -58,15 +78,8 @@ function createInitialState() {
         library_id: null,
         library_saved_at_epoch_ms: null,
         experiment_type: "",
-        /*
-
-        Reserved for the preset system
-
-        planned for a later version.
-
-        */
         event_preset: "",
-        event_types: [...DEFAULT_EVENTS],
+        event_types: [],
         experiment_start_datetime: null,
         experiment_end_datetime: null,
         elapsed_checkpoint_ms: 0,
@@ -106,8 +119,9 @@ function normalizeLoadedState(parsed) {
         ...parsed,
     };
     merged.version = STATE_VERSION;
-    if (!Array.isArray(merged.event_types) || merged.event_types.length === 0) {
-        merged.event_types = [...DEFAULT_EVENTS];
+    // Legacy recorded cases may lack event_types; READY never assumes LC buttons.
+    if (!Array.isArray(merged.event_types) || (merged.state !== "READY" && merged.event_types.length === 0)) {
+        merged.event_types = merged.state === "READY" ? [] : [...DEFAULT_EVENTS];
     }
     merged.events = Array.isArray(merged.events) ? merged.events.map(normalizeEvent) : [];
     if (merged.clock_offset_seconds === null || merged.clock_offset_seconds === undefined || merged.clock_offset_seconds === "") {
@@ -144,6 +158,23 @@ const completeView = document.querySelector("#completeView");
 const statusBadge = document.querySelector("#statusBadge");
 const caseIdInput = document.querySelector("#caseIdInput");
 const experimentTypeInput = document.querySelector("#experimentTypeInput");
+const eventPresetSelect = document.querySelector("#eventPresetSelect");
+const eventPresetPreview = document.querySelector("#eventPresetPreview");
+const newPresetButton = document.querySelector("#newPresetButton");
+const editPresetButton = document.querySelector("#editPresetButton");
+const presetEditorOverlay = document.querySelector("#presetEditorOverlay");
+const presetEditorDialog = document.querySelector(".preset-editor-dialog");
+const presetEditorTitle = document.querySelector("#presetEditorTitle");
+const presetEditorClose = document.querySelector("#presetEditorClose");
+const presetNameInput = document.querySelector("#presetNameInput");
+const presetAddEventForm = document.querySelector("#presetAddEventForm");
+const presetEventInput = document.querySelector("#presetEventInput");
+const presetEditorEvents = document.querySelector("#presetEditorEvents");
+const presetEditorCount = document.querySelector("#presetEditorCount");
+const presetEditorError = document.querySelector("#presetEditorError");
+const presetEditorDelete = document.querySelector("#presetEditorDelete");
+const presetEditorCancel = document.querySelector("#presetEditorCancel");
+const presetEditorSave = document.querySelector("#presetEditorSave");
 const startButton = document.querySelector("#startButton");
 const endButton = document.querySelector("#endButton");
 const newCaseButton = document.querySelector("#newCaseButton");
@@ -192,6 +223,361 @@ const exportAllCsvButton = document.querySelector("#exportAllCsvButton");
 const backupLibraryButton = document.querySelector("#backupLibraryButton");
 const libraryBackupStatus = document.querySelector("#libraryBackupStatus");
 let libraryRecords = [];
+
+/* =========================================================
+   EVENT PRESETS · GENERAL (BUILT-IN + USER EDITOR)
+   Presets are local configuration, separate from scientific case records.
+   Existing caseState.event_types remains a frozen snapshot after START.
+   ========================================================= */
+let customPresets = {};
+let presetDraft = null;
+let presetDraftEditingId = null;
+let presetDraftDirty = false;
+let editingDraftEventIndex = null;
+let previousEditorFocus = null;
+let draggedEvent = null;
+
+function allPresets() {
+    return { ...EVENT_PRESETS, ...customPresets };
+}
+
+function getPreset(presetId) {
+    return Object.hasOwn(EVENT_PRESETS, presetId) ? EVENT_PRESETS[presetId] : customPresets[presetId];
+}
+
+function isValidCustomPreset(raw, id) {
+    return typeof id === "string" && id.startsWith("custom_") && raw &&
+        typeof raw.name === "string" && raw.name.trim().length > 0 && raw.name.length <= 60 &&
+        Array.isArray(raw.events) && raw.events.length >= 1 && raw.events.length <= MAX_PRESET_EVENTS &&
+        raw.events.every((event) => typeof event === "string" && event.trim().length > 0 && event.length <= 50) &&
+        new Set(raw.events.map((event) => event.trim().toLocaleLowerCase())).size === raw.events.length;
+}
+
+function loadCustomPresets() {
+    try {
+        const raw = JSON.parse(localStorage.getItem(CUSTOM_PRESETS_KEY) || "{}");
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+        for (const [id, value] of Object.entries(raw)) {
+            if (isValidCustomPreset(value, id)) {
+                customPresets[id] = { name: value.name.trim(), description: "Custom preset", events: value.events.map((s) => s.trim()) };
+            }
+        }
+    } catch (error) {
+        console.warn("Preset settings could not be loaded:", error);
+    }
+}
+
+function storeCustomPresets(nextPresets) {
+    // Do not show Save success when persistent storage is unavailable or full.
+    try {
+        localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(nextPresets));
+        customPresets = nextPresets;
+        return true;
+    } catch (error) {
+        showPresetEditorError("Could not save the preset on this device. Check browser storage settings.");
+        console.error("Preset save failed:", error);
+        return false;
+    }
+}
+
+function renderPresetPreview() {
+    const preset = getPreset(eventPresetSelect.value);
+    eventPresetPreview.replaceChildren();
+    editPresetButton.disabled = !preset;
+    editPresetButton.textContent = preset && Object.hasOwn(customPresets, eventPresetSelect.value) ? "Edit Preset" : "Customize a Copy";
+    const summary = document.createElement("div");
+    summary.className = "preset-preview-summary";
+    if (!preset) {
+        summary.textContent = "Select or create a preset to preview events.";
+        eventPresetPreview.appendChild(summary);
+        return;
+    }
+    summary.textContent = `${preset.events.length} events · ${preset.description}`;
+    const tags = document.createElement("div");
+    tags.className = "preset-preview-tags";
+    preset.events.forEach((eventName) => {
+        const tag = document.createElement("span");
+        tag.className = "preset-preview-tag";
+        tag.textContent = eventName;
+        tags.appendChild(tag);
+    });
+    eventPresetPreview.append(summary, tags);
+}
+
+function renderPresetOptions(selectedId = "") {
+    eventPresetSelect.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select an event preset";
+    eventPresetSelect.appendChild(placeholder);
+    for (const [id, preset] of Object.entries(allPresets())) {
+        const option = document.createElement("option");
+        option.value = id;
+        option.textContent = preset.name;
+        eventPresetSelect.appendChild(option);
+    }
+    eventPresetSelect.value = getPreset(selectedId) ? selectedId : "";
+    renderPresetPreview();
+}
+
+function showPresetEditorError(message) {
+    presetEditorError.textContent = message;
+    presetEditorError.classList.toggle("hidden", !message);
+}
+
+function markPresetDraftDirty() {
+    presetDraftDirty = true;
+    showPresetEditorError("");
+}
+
+function openPresetEditor(mode = "new") {
+    if (caseState.state !== "READY") return;
+    const currentId = eventPresetSelect.value;
+    const currentPreset = getPreset(currentId);
+    presetDraftEditingId = mode === "edit" && Object.hasOwn(customPresets, currentId) ? currentId : null;
+    const copy = mode === "copy" || mode === "edit";
+    presetDraft = {
+        name: copy && currentPreset ? (mode === "copy" ? `${currentPreset.name} Copy` : currentPreset.name) : "",
+        events: copy && currentPreset ? [...currentPreset.events] : [],
+    };
+    presetDraftDirty = false;
+    editingDraftEventIndex = null;
+    presetEditorTitle.textContent = presetDraftEditingId ? "Edit Preset" : "Create Preset";
+    presetNameInput.value = presetDraft.name;
+    presetEventInput.value = "";
+    presetEditorDelete.classList.toggle("hidden", !presetDraftEditingId);
+    showPresetEditorError("");
+    renderDraftEvents();
+    previousEditorFocus = document.activeElement;
+    presetEditorOverlay.classList.remove("hidden");
+    document.body.classList.add("preset-editor-open");
+    presetNameInput.focus();
+}
+
+function closePresetEditor(force = false) {
+    if (!force && presetDraftDirty && !window.confirm("Discard unsaved preset changes?")) return;
+    presetEditorOverlay.classList.add("hidden");
+    document.body.classList.remove("preset-editor-open");
+    presetDraft = null;
+    editingDraftEventIndex = null;
+    draggedEvent = null;
+    if (previousEditorFocus?.isConnected) previousEditorFocus.focus();
+}
+
+function validEventName(name, skipIndex = -1) {
+    const trimmed = name.trim();
+    if (!trimmed) return "Enter an event name.";
+    if (trimmed.length > 50) return "Event names must be 50 characters or fewer.";
+    if (presetDraft.events.some((event, index) => index !== skipIndex && event.toLocaleLowerCase() === trimmed.toLocaleLowerCase())) {
+        return "This event already exists in the preset.";
+    }
+    return "";
+}
+
+function addDraftEvent() {
+    if (!presetDraft) return;
+    const name = presetEventInput.value.trim();
+    const error = validEventName(name);
+    if (error) { showPresetEditorError(error); return; }
+    if (presetDraft.events.length >= MAX_PRESET_EVENTS) {
+        showPresetEditorError(`Up to ${MAX_PRESET_EVENTS} event buttons per preset.`);
+        return;
+    }
+    presetDraft.events.push(name);
+    markPresetDraftDirty();
+    presetEventInput.value = "";
+    renderDraftEvents();
+    presetEventInput.focus();
+}
+
+function moveDraftEvent(from, to) {
+    if (!presetDraft || from === to || from < 0 || to < 0 || from >= presetDraft.events.length || to >= presetDraft.events.length) return;
+    const [item] = presetDraft.events.splice(from, 1);
+    presetDraft.events.splice(to, 0, item);
+    editingDraftEventIndex = null;
+    markPresetDraftDirty();
+    renderDraftEvents();
+}
+
+function createDraftAction(text, label, callback, disabled = false) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "preset-row-action";
+    button.textContent = text;
+    button.setAttribute("aria-label", label);
+    button.title = label;
+    button.disabled = disabled;
+    button.addEventListener("click", callback);
+    return button;
+}
+
+function renderDraftEvents() {
+    if (!presetDraft) return;
+    presetEditorEvents.replaceChildren();
+    presetEditorCount.textContent = `${presetDraft.events.length} EVENTS`;
+    if (!presetDraft.events.length) {
+        const empty = document.createElement("p");
+        empty.className = "preset-empty-message";
+        empty.textContent = "Add your first event to see it here.";
+        presetEditorEvents.appendChild(empty);
+        return;
+    }
+    presetDraft.events.forEach((name, index) => {
+        const row = document.createElement("div");
+        row.className = "preset-event-item";
+        row.dataset.index = String(index);
+        const handle = document.createElement("button");
+        handle.type = "button";
+        handle.className = "preset-drag-handle";
+        handle.textContent = "⠿";
+        handle.title = `Drag to reorder ${name}`;
+        handle.setAttribute("aria-label", `Drag to reorder ${name}`);
+        handle.addEventListener("pointerdown", (event) => beginPresetDrag(event, index, handle));
+        row.appendChild(handle);
+        if (editingDraftEventIndex === index) {
+            const input = document.createElement("input");
+            input.className = "preset-inline-input";
+            input.type = "text";
+            input.maxLength = 50;
+            input.value = name;
+            input.setAttribute("aria-label", `Rename ${name}`);
+            const applyEdit = () => {
+                const updated = input.value.trim();
+                const error = validEventName(updated, index);
+                if (error) { showPresetEditorError(error); input.focus(); return; }
+                if (updated !== name) { presetDraft.events[index] = updated; markPresetDraftDirty(); }
+                editingDraftEventIndex = null;
+                renderDraftEvents();
+            };
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") { event.preventDefault(); applyEdit(); }
+                if (event.key === "Escape") { editingDraftEventIndex = null; renderDraftEvents(); }
+            });
+            row.appendChild(input);
+            row.appendChild(createDraftAction("✓", `Save rename for ${name}`, applyEdit));
+            row.appendChild(createDraftAction("×", "Cancel rename", () => { editingDraftEventIndex = null; renderDraftEvents(); }));
+        } else {
+            const title = document.createElement("span");
+            title.className = "preset-event-name";
+            title.textContent = name;
+            row.appendChild(title);
+            row.appendChild(createDraftAction("✎", `Rename ${name}`, () => {
+                editingDraftEventIndex = index;
+                renderDraftEvents();
+                presetEditorEvents.querySelector(".preset-inline-input")?.focus();
+            }));
+            row.appendChild(createDraftAction("↑", `Move ${name} up`, () => moveDraftEvent(index, index - 1), index === 0));
+            row.appendChild(createDraftAction("↓", `Move ${name} down`, () => moveDraftEvent(index, index + 1), index === presetDraft.events.length - 1));
+            row.appendChild(createDraftAction("×", `Remove ${name}`, () => {
+                presetDraft.events.splice(index, 1);
+                markPresetDraftDirty();
+                renderDraftEvents();
+            }));
+        }
+        presetEditorEvents.appendChild(row);
+    });
+}
+
+function clearPresetDragHighlight() {
+    presetEditorEvents.querySelectorAll(".preset-drop-target, .preset-drag-origin").forEach((row) => {
+        row.classList.remove("preset-drop-target", "preset-drag-origin");
+    });
+}
+
+function beginPresetDrag(event, index, handle) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (editingDraftEventIndex !== null) return;
+    event.preventDefault();
+    draggedEvent = { pointerId: event.pointerId, origin: index, target: index };
+    handle.setPointerCapture?.(event.pointerId);
+    handle.closest(".preset-event-item")?.classList.add("preset-drag-origin");
+    const pointMove = (move) => {
+        if (!draggedEvent || move.pointerId !== draggedEvent.pointerId) return;
+        const target = document.elementFromPoint(move.clientX, move.clientY)?.closest(".preset-event-item");
+        clearPresetDragHighlight();
+        handle.closest(".preset-event-item")?.classList.add("preset-drag-origin");
+        if (target && presetEditorEvents.contains(target)) {
+            draggedEvent.target = Number(target.dataset.index);
+            target.classList.add("preset-drop-target");
+        }
+    };
+    const finish = (end) => {
+        if (!draggedEvent || end.pointerId !== draggedEvent.pointerId) return;
+        const { origin, target } = draggedEvent;
+        draggedEvent = null;
+        handle.removeEventListener("pointermove", pointMove);
+        handle.removeEventListener("pointerup", finish);
+        handle.removeEventListener("pointercancel", cancel);
+        clearPresetDragHighlight();
+        moveDraftEvent(origin, target);
+    };
+    const cancel = (end) => {
+        if (end.pointerId !== draggedEvent?.pointerId) return;
+        draggedEvent = null;
+        handle.removeEventListener("pointermove", pointMove);
+        handle.removeEventListener("pointerup", finish);
+        handle.removeEventListener("pointercancel", cancel);
+        clearPresetDragHighlight();
+    };
+    handle.addEventListener("pointermove", pointMove);
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", cancel);
+}
+
+function savePresetDraft() {
+    if (!presetDraft) return;
+    const name = presetNameInput.value.trim();
+    if (!name || name.length > 60) { showPresetEditorError("Enter a preset name (up to 60 characters)."); return; }
+    if (!presetDraft.events.length) { showPresetEditorError("Add at least one event before saving."); return; }
+    const duplicate = Object.entries(allPresets()).some(([id, preset]) =>
+        id !== presetDraftEditingId && preset.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+    if (duplicate) { showPresetEditorError("A preset with this name already exists."); return; }
+    const id = presetDraftEditingId || `custom_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const updated = { ...customPresets, [id]: { name, description: "Custom preset", events: [...presetDraft.events] } };
+    if (!storeCustomPresets(updated)) return;
+    presetDraftDirty = false;
+    closePresetEditor(true);
+    renderPresetOptions(id);
+}
+
+function deleteSelectedPreset() {
+    if (!presetDraftEditingId || !Object.hasOwn(customPresets, presetDraftEditingId)) return;
+    if (!window.confirm(`Delete preset “${customPresets[presetDraftEditingId].name}”? Previously saved cases will not be changed.`)) return;
+    const next = { ...customPresets };
+    delete next[presetDraftEditingId];
+    if (!storeCustomPresets(next)) return;
+    presetDraftDirty = false;
+    closePresetEditor(true);
+    renderPresetOptions("");
+}
+
+function initializeEventPresets() {
+    loadCustomPresets();
+    renderPresetOptions();
+    eventPresetSelect.addEventListener("change", () => {
+        if (caseState.state !== "READY") return;
+        renderPresetPreview();
+    });
+    newPresetButton.addEventListener("click", () => openPresetEditor("new"));
+    editPresetButton.addEventListener("click", () => openPresetEditor(Object.hasOwn(customPresets, eventPresetSelect.value) ? "edit" : "copy"));
+    presetNameInput.addEventListener("input", markPresetDraftDirty);
+    presetAddEventForm.addEventListener("submit", (event) => { event.preventDefault(); addDraftEvent(); });
+    presetEditorSave.addEventListener("click", savePresetDraft);
+    presetEditorDelete.addEventListener("click", deleteSelectedPreset);
+    presetEditorClose.addEventListener("click", () => closePresetEditor());
+    presetEditorCancel.addEventListener("click", () => closePresetEditor());
+    document.addEventListener("keydown", (event) => {
+        if (presetEditorOverlay.classList.contains("hidden")) return;
+        if (event.key === "Escape") { event.preventDefault(); closePresetEditor(); }
+        if (event.key === "Tab") {
+            const focusable = [...presetEditorDialog.querySelectorAll('button:not([disabled]):not(.hidden), input:not([disabled])')].filter(el => el.getClientRects().length);
+            if (!focusable.length) return;
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+            else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }
+    });
+}
 
 /* =========================================================
 
@@ -681,20 +1067,30 @@ function startExperiment() {
     const experimentType = experimentTypeInput.value.trim();
     if (!caseId) {
         alert("Please enter a Case ID.");
+        caseIdInput.focus();
         return;
     }
-    /*
-
-    Capture the experiment start timestamp
-
-    before storage work.
-
-    */
+    if (!experimentType) {
+        alert("Please enter an Experiment type.");
+        experimentTypeInput.focus();
+        return;
+    }
+    const selectedPresetId = eventPresetSelect.value;
+    const selectedPreset = getPreset(selectedPresetId);
+    if (!selectedPreset || selectedPreset.events.length === 0) {
+        alert("Please select a valid event preset.");
+        eventPresetSelect.focus();
+        return;
+    }
+    // All required fields are valid; capture the start timestamp before storage work.
     const now = new Date();
     caseState.case_id = caseId;
     caseState.library_id = null;
     caseState.library_saved_at_epoch_ms = null;
     caseState.experiment_type = experimentType;
+    // Snapshot the chosen preset before recording. Future preset edits cannot alter this case.
+    caseState.event_preset = selectedPresetId;
+    caseState.event_types = [...selectedPreset.events];
     caseState.state = "RUNNING";
     caseState.experiment_start_datetime = now.toISOString();
     caseState.experiment_end_datetime = null;
@@ -809,6 +1205,7 @@ async function newCase() {
     }
     await clearSavedState();
     caseState = createInitialState();
+    renderPresetOptions("");
     runtime = {
         elapsedBaseMs: 0,
         perfAnchor: null,
@@ -1451,7 +1848,8 @@ function renderCaseLibrary() {
 function renderReady() {
     readyView.classList.remove("hidden");
     caseIdInput.value = caseState.case_id || "";
-    experimentTypeInput.value = caseState.experiment_type || "LC_multi";
+    experimentTypeInput.value = caseState.experiment_type || "";
+    renderPresetPreview();
     renderCaseLibrary();
 }
 
@@ -1669,4 +2067,5 @@ async function initializeApplication() {
     }
 }
 initializeClockPicker();
+initializeEventPresets();
 initializeApplication();

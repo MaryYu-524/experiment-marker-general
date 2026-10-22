@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-        <title>Experiment Marker</title>
+        <title>Experiment Marker General</title>
         <meta name="theme-color" content="#ff4b4b">
         <link rel="manifest" href="manifest.json">
         <link rel="stylesheet" href="style.css">
@@ -13,7 +13,7 @@
             <header class="header">
                 <div>
                     <div class="eyebrow">EXPERIMENT MARKER</div>
-                    <h1>Mobile Prototype</h1>
+                    <h1>Marker General</h1>
                 </div>
                 <div id="statusBadge" class="status-badge">READY</div>
             </header>
@@ -22,9 +22,16 @@
             <section id="readyView" class="view">
                 <div class="panel">
                     <label for="caseIdInput">Case ID</label>
-                    <input id="caseIdInput" type="text" placeholder="e.g. LC_001" autocomplete="off">
+                    <input id="caseIdInput" type="text" placeholder="e.g. Case_001" autocomplete="off">
                     <label for="experimentTypeInput">Experiment type</label>
-                    <input id="experimentTypeInput" type="text" value="LC_multi" autocomplete="off">
+                    <input id="experimentTypeInput" type="text" placeholder="Enter experiment type" autocomplete="off">
+                    <label for="eventPresetSelect">Event Preset</label>
+                    <select id="eventPresetSelect" class="preset-select" aria-describedby="eventPresetPreview"></select>
+                    <div id="eventPresetPreview" class="preset-preview" aria-live="polite"></div>
+                    <div class="preset-actions">
+                        <button id="newPresetButton" class="utility-button" type="button">+ New Preset</button>
+                        <button id="editPresetButton" class="utility-button" type="button">Customize a Copy</button>
+                    </div>
                     <button id="startButton" class="primary-button" type="button">START EXPERIMENT</button>
                 </div>
                 <details class="library-shell" open>
@@ -182,6 +189,42 @@
                 <button id="newCaseButton" class="secondary-button new-case-button" type="button">Discard Case</button>
             </section>
         </main>
+        <!-- READY-only preset editor; does not modify a case in progress. -->
+        <div id="presetEditorOverlay" class="preset-editor-overlay hidden">
+            <section class="preset-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="presetEditorTitle" tabindex="-1">
+                <header class="preset-editor-heading">
+                    <div>
+                        <div class="small-label">GENERAL · EVENT CONFIGURATION</div>
+                        <h2 id="presetEditorTitle">Create Preset</h2>
+                    </div>
+                    <button id="presetEditorClose" class="preset-icon-button" type="button" aria-label="Close editor">×</button>
+                </header>
+                <label for="presetNameInput">Preset name</label>
+                <input id="presetNameInput" type="text" maxlength="60" placeholder="e.g. My Experiment" autocomplete="off">
+                <form id="presetAddEventForm" class="preset-add-form">
+                    <label for="presetEventInput">Add event</label>
+                    <div class="preset-add-row">
+                        <input id="presetEventInput" type="text" maxlength="50" placeholder="Enter an event name" autocomplete="off">
+                        <button id="presetAddEventButton" class="utility-button" type="submit">+ Add</button>
+                    </div>
+                </form>
+                <div class="preset-editor-preview-heading">
+                    <strong>Event Preview</strong>
+                    <span id="presetEditorCount" class="small-label">0 EVENTS</span>
+                </div>
+                <p class="preset-editor-hint">Drag ⠿ to change button order. You can also use ↑ / ↓.</p>
+                <div id="presetEditorEvents" class="preset-editor-events" aria-live="polite"></div>
+                <div id="presetEditorError" class="preset-editor-error hidden" role="alert"></div>
+                <div class="preset-editor-footer">
+                    <button id="presetEditorDelete" class="preset-danger-button hidden" type="button">Delete Preset</button>
+                    <div class="preset-editor-main-actions">
+                        <button id="presetEditorCancel" class="utility-button" type="button">Cancel</button>
+                        <button id="presetEditorSave" class="primary-button" type="button">Save Preset</button>
+                    </div>
+                </div>
+                <p class="preset-editor-hint">Saved locally on this device. Case Library backups do not include custom preset settings.</p>
+            </section>
+        </div>
         <script src="storage.js"></script>
         <script src="app.js"></script>
         <script>
