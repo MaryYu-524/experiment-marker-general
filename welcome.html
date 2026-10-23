@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Experiment Marker · Welcome</title>
+  <style>
+    :root {
+      --accent: #ff4b4b;
+      --accent-deep: #e7353f;
+      --ink: #24242d;
+      --muted: #868690;
+      --border: rgba(36,36,45,.12);
+      --draw-time: 1200ms;        /* SVG 曲线画出来所需时间 */
+      --marker-delay: 1270ms;     /* 红色标记线开始下落 */
+      --ripple-delay: 1650ms;    /* 轻微扩散开始 */
+      --title-delay: 1470ms;     /* 品牌文案开始呈现 */
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: #fff; }
+    body {
+      margin: 0;
+      min-height: 100svh;
+      color: var(--ink);
+      font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(ellipse 86% 50% at 50% 42%, rgba(255,75,75,.038), transparent 77%), #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; cursor: pointer; touch-action: manipulation; }
+    button:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+    .screen {
+      width: min(100%, 510px);
+      min-height: 100svh;
+      margin-inline: auto;
+      padding: max(52px, calc(env(safe-area-inset-top) + 32px)) 25px max(44px, calc(env(safe-area-inset-bottom) + 34px));
+    }
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: calc(100svh - max(52px, calc(env(safe-area-inset-top) + 32px)) - max(44px, calc(env(safe-area-inset-bottom) + 34px)));
+    }
+    .eyebrow {
+      color: var(--muted);
+      font-size: .68rem;
+      font-weight: 750;
+      letter-spacing: .33em;
+      white-space: nowrap;
+    }
+    /* 中间的曲线与标题组成一个整体 Hero，而非由曲线单独撑开屏幕。 */
+    .hero {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: clamp(26px, 4vh, 46px);
+      width: 100%;
+      min-height: 0;
+      padding-block: clamp(16px, 3vh, 32px);
+    }
+    .artwork { width: 100%; margin: 0; flex: 0 0 auto; }
+    .motion-graphic { display: block; width: 112%; max-width: none; margin-left: -6%; overflow: visible; }
+    .trace {
+      fill: none;
+      stroke: url(#traceGradient);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 0;
+      filter: drop-shadow(0 3px 5px rgba(255,75,75,.035));
+    }
+    .guide { stroke: #d6d7dd; stroke-width: 1; opacity: .36; }
+    .quiet-dot { fill: #bdc0c8; opacity: .75; }
+    .marker-line { stroke: var(--accent); stroke-width: 2.8; stroke-linecap: round; }
+    .marker-dot { fill: var(--accent-deep); transform-box: fill-box; transform-origin: center; }
+    .ripple { fill: none; stroke: var(--accent); stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; }
+    .brand { width: 100%; margin: 0; }
+    h1 { margin: 0; font-size: clamp(2.25rem, 9.4vw, 3.4rem); line-height: 1.08; letter-spacing: -.055em; font-weight: 780; }
+    h1 .accent { color: var(--accent-deep); }
+    .tagline { margin: 16px 0 0; color: #797a83; font-size: clamp(.93rem, 3.4vw, 1.06rem); line-height: 1.4; }
+    .bottom {
+      margin-top: 0;
+      padding-top: clamp(22px, 4vh, 40px);
+      width: 100%;
+    }
+    .primary {
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+      width: 100%; min-height: 58px; border: 0; border-radius: 16px;
+      color: #fff; font-size: 1.05rem; font-weight: 700;
+      background: linear-gradient(115deg, #ff5456, #ed303d);
+      box-shadow: 0 14px 30px rgba(255,75,75,.12);
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+    .primary:active, .primary.is-leaving { transform: scale(.985); filter: brightness(.96); }
+    .primary svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .replay {
+      margin-top: 20px; padding: 10px 16px; border: 0; background: transparent;
+      color: var(--muted); font-size: .82rem; text-decoration: underline; text-underline-offset: 4px;
+    }
+    .note { margin: 10px 0 0; color: #a0a0a9; font-size: .69rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    [hidden] { display: none !important; }
+    /* 只对 welcome 页面重播动效；不会影响正式应用的业务状态。 */
+    .is-playing .trace {
+      animation: drawTrace var(--draw-time) cubic-bezier(.22,.7,.22,1) both;
+    }
+    .is-playing .guide { animation: guideAppear 450ms ease 970ms both; }
+    .is-playing .quiet-dot { animation: dotAppear 450ms ease 970ms both; }
+    .is-playing .marker-line {
+      transform-box: fill-box; transform-origin: top center;
+      animation: markerFall 345ms cubic-bezier(.2,.9,.3,1.05) var(--marker-delay) both;
+    }
+    .is-playing .marker-dot { animation: markerAppear 210ms ease 1590ms both; }
+    /* forwards 避免在 animation-delay 期间预先露出一圈空心红环。 */
+    .is-playing .ripple.one { animation: ring 750ms ease-out var(--ripple-delay) forwards; }
+    .is-playing .ripple.two { animation: ring 800ms ease-out 1750ms forwards; }
+    .is-playing .brand { animation: riseIn 580ms ease var(--title-delay) both; }
+    .is-playing .bottom { animation: riseIn 520ms ease 1830ms both; }
+    @keyframes drawTrace { from { stroke-dashoffset: 1000; opacity: .25; } to { stroke-dashoffset: 0; opacity: 1; } }
+    @keyframes guideAppear { from { opacity: 0; } to { opacity: .36; } }
+    @keyframes dotAppear { from { opacity: 0; } to { opacity: .75; } }
+    @keyframes markerFall { from { opacity: 0; transform: translateY(-14px) scaleY(.26); } to { opacity: 1; transform: translateY(0) scaleY(1); } }
+    @keyframes markerAppear { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+    @keyframes ring { 0% { opacity: .46; transform: scale(.35); } 100% { opacity: 0; transform: scale(1.75); } }
+    @keyframes riseIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    /* Demo destination: only to test screen transition, NOT the real READY page. */
+    .destination {
+      min-height: calc(100svh - 90px);
+      display: flex; flex-direction: column; justify-content: center;
+      text-align: left;
+    }
+    .destination .eyebrow { letter-spacing: .14em; }
+    .destination h2 { font-size: 2.5rem; letter-spacing: -.05em; margin: 12px 0 26px; }
+    .destination .card { border: 1px solid var(--border); background: #fff; border-radius: 18px; padding: 22px; }
+    .destination .card p { color: var(--muted); line-height: 1.6; }
+    .destination .card .primary { margin-top: 28px; }
+    .destination .back { margin-top: 22px; border: 0; background: transparent; color: #777783; align-self: center; }
+    @media (max-height: 660px) {
+      .screen { padding-top: max(22px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+      .welcome { min-height: calc(100svh - 40px); }
+      .hero { gap: 15px; padding-block: 10px; }
+      .bottom { padding-top: 16px; }
+      .replay { margin-top: 8px; }
+      .tagline { margin-top: 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0ms !important; transition-duration: .01ms !important; }
+      .ripple { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <section id="welcome" class="welcome is-playing" aria-label="Experiment Marker welcome">
+      <div class="eyebrow">EXPERIMENT MARKER</div>
+      <div class="hero">
+      <div class="artwork">
+        <svg class="motion-graphic" viewBox="0 0 580 250" role="img" aria-labelledby="waveTitle waveDesc">
+          <title id="waveTitle">Event marker handwritten waveform</title>
+          <desc id="waveDesc">An abstract pen stroke, reminiscent of writing Marker, becomes a time series and receives a red event marker.</desc>
+          <defs>
+            <linearGradient id="traceGradient" x1="0" y1="0" x2="580" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#d4d5db"/>
+              <stop offset="21%" stop-color="#ff9da0"/>
+              <stop offset="35%" stop-color="#ff4b4b"/>
+              <stop offset="70%" stop-color="#f34851"/>
+              <stop offset="82%" stop-color="#d2d3da"/>
+              <stop offset="100%" stop-color="#d9dadf"/>
+            </linearGradient>
+          </defs>
+          <!-- 三个辅助标记只显示灰色，落点由脚本自动吸附到曲线上。 -->
+          <!-- v6：主体笔迹仍是一条连续路径；k 的竖笔不在此路径中。
+               先描绘 mar<er，最后才由居中的红色 marker-line 补齐 k。 -->
+          <path id="signatureTrace" class="trace" pathLength="1000"
+            d="M 14 145
+               C 29 135 35 132 44 143
+               C 58 158 69 157 82 141
+               C 101 122 112 128 130 143
+               C 140.4 154 141.2 92 152.4 101
+               C 160.4 107 161.2 153 168.4 145
+               C 174.8 137 178 102 186 106
+               C 194 110 190 147 200.4 144
+               C 206 143 208.4 123 217.2 120
+               C 229.2 114 237.2 123 232.4 138
+               C 227.6 152 213.2 151 214.8 136
+               C 218 116 232.4 111 236.4 137
+               C 238.8 151 243.6 142 246.8 129
+               C 251.6 109 255.6 123 255.6 145
+               C 257.2 131 261.2 114 271.6 123
+               C 280.8 130 285 135 290 135
+               C 303 129 315 120 326.3 125
+               C 314 121 300 132 290 135
+               C 304 142 316 157 333 143
+               C 345.1 133 345.1 119 364 119
+               C 386.8 118 385.5 139 358.6 138
+               C 346.5 137 362.6 158 386.8 139
+               C 396.2 128 405.7 117 408.3 148
+               C 412.4 136 423.1 111 446 124
+               C 459 136 469 160 485 140
+               C 498 123 504 123 516 140
+               C 529 151 545 152 566 133"/>
+          <!-- 参考竖线终止于对应曲线位置，圆点也紧贴曲线。 -->
+          <g class="signal-reference" data-x="110" data-near-y="110" aria-hidden="true">
+            <line class="guide" x1="110" y1="63" x2="110" y2="110"/>
+            <circle class="quiet-dot" cx="110" cy="110" r="4"/>
+          </g>
+          <g class="signal-reference" data-x="404" data-near-y="138" aria-hidden="true">
+            <line class="guide" x1="404" y1="75" x2="404" y2="138"/>
+            <circle class="quiet-dot" cx="404" cy="138" r="4"/>
+          </g>
+          <g class="signal-reference" data-x="503" data-near-y="139" aria-hidden="true">
+            <line class="guide" x1="503" y1="67" x2="503" y2="139"/>
+            <circle class="quiet-dot" cx="503" cy="139" r="4"/>
+          </g>
+          <!-- 中央红线 x=290 固定；它是 k 的唯一竖笔，结尾才落下。 -->
+          <g id="centerEventMarker" aria-hidden="true">
+            <line class="marker-line" x1="290" y1="40" x2="290" y2="124"/>
+            <circle class="ripple one" cx="290" cy="124" r="30"/>
+            <circle class="ripple two" cx="290" cy="124" r="30"/>
+            <circle class="marker-dot" cx="290" cy="124" r="6.3"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>Marker <span class="accent">General</span></h1>
+        <p class="tagline">Mark the moment. Preserve the timeline.</p>
+      </div>
+      </div><!-- /hero -->
+      <div class="bottom">
+        <button class="primary" id="getStarted" type="button">
+          Get Started
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-7-7 7 7-7 7"/></svg>
+        </button>
+        <button class="replay" id="replay" type="button" aria-label="Replay welcome animation">↻ Replay animation</button>
+        <p class="note">Motion prototype · no case data is stored here.</p>
+      </div>
+    </section>
+    <section id="destination" class="destination" hidden aria-labelledby="readyHeading">
+      <div class="eyebrow">EXPERIMENT MARKER · PROTOTYPE</div>
+      <h2 id="readyHeading">READY</h2>
+      <div class="card">
+        <strong>Welcome transition complete.</strong>
+        <p>This is only a demonstration of the first-run welcome screen. In the finished General PWA, Get Started will lead into the existing READY view without touching stored cases.</p>
+        <button id="goBack" class="primary" type="button">Back to Welcome</button>
+      </div>
+    </section>
+  </main>
+  <script>
+    "use strict";
+    const isEmbeddedWelcome = window.parent !== window;
+    if (isEmbeddedWelcome) {
+      document.querySelector("#replay").hidden = true;
+      document.querySelector(".note").hidden = true;
+    }
+    const welcome = document.querySelector("#welcome");
+    const destination = document.querySelector("#destination");
+    const replayButton = document.querySelector("#replay");
+    const signatureTrace = document.querySelector("#signatureTrace");
+
+    // 页面启动时只抽样一次 SVG 路径，避免在每个标记上反复计算。
+    // 找出路径与指定 X 的交点。遇到字母回环时，用 nearY 选取对应笔画。
+    const traceSamples = (() => {
+      const samples = [];
+      const length = signatureTrace.getTotalLength();
+      const steps = 320;
+      for (let i = 0; i <= steps; i++) {
+        samples.push(signatureTrace.getPointAtLength(length * i / steps));
+      }
+      return samples;
+    })();
+    function pointOnTraceAtX(targetX, preferredY) {
+      const crossings = [];
+      let nearest = traceSamples[0];
+      let nearestDistance = Infinity;
+      for (let i = 1; i < traceSamples.length; i++) {
+        const last = traceSamples[i - 1];
+        const point = traceSamples[i];
+        const distance = Math.abs(point.x - targetX);
+        if (distance < nearestDistance) { nearest = point; nearestDistance = distance; }
+        if ((last.x - targetX) * (point.x - targetX) <= 0 && point.x !== last.x) {
+          const fraction = (targetX - last.x) / (point.x - last.x);
+          crossings.push({ x: targetX, y: last.y + fraction * (point.y - last.y) });
+        }
+      }
+      if (!crossings.length) return nearest;
+      return crossings.reduce((chosen, point) =>
+        Math.abs(point.y - preferredY) < Math.abs(chosen.y - preferredY) ? point : chosen);
+    }
+
+    function alignGuidesToCurve() {
+      document.querySelectorAll(".signal-reference").forEach((group) => {
+        const x = Number(group.dataset.x);
+        const { y } = pointOnTraceAtX(x, Number(group.dataset.nearY));
+        const guide = group.querySelector("line");
+        guide.setAttribute("y1", (y - 46).toFixed(2));
+        guide.setAttribute("y2", y.toFixed(2));
+        group.querySelector("circle").setAttribute("cy", y.toFixed(2));
+      });
+      const centerX = 290; // SVG viewBox 宽 580，故居中 X = 580 / 2
+      const { y } = pointOnTraceAtX(centerX, 135); // k 的 < 形斜臂交汇处；红线最后补笔
+      const marker = document.querySelector("#centerEventMarker");
+      const redLine = marker.querySelector("line");
+      redLine.setAttribute("y1", (y - 82).toFixed(2));
+      redLine.setAttribute("y2", y.toFixed(2));
+      marker.querySelectorAll("circle").forEach((circle) => circle.setAttribute("cy", y.toFixed(2)));
+    }
+    alignGuidesToCurve();
+
+    function replayMotion() {
+      // 删除并重新添加 class，要求浏览器重新计算样式，确保 CSS 动画从头播放。
+      welcome.classList.remove("is-playing");
+      void welcome.offsetWidth;
+      welcome.classList.add("is-playing");
+    }
+    replayButton.addEventListener("click", replayMotion);
+    const getStartedButton = document.querySelector("#getStarted");
+    let isLeaving = false;
+    getStartedButton.addEventListener("click", () => {
+      if (isLeaving) return;
+      isLeaving = true;
+      getStartedButton.classList.add("is-leaving");
+      // 浏览器若支持且允许，在真实用户点击后尝试短震动；iPhone Safari 通常不支持。
+      if (typeof navigator.vibrate === "function") navigator.vibrate(12);
+      if (isEmbeddedWelcome) {
+        const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.setTimeout(() => {
+          window.parent.postMessage({ type: "experiment-marker-welcome-complete", version: 1 },
+            window.location.protocol === "file:" ? "*" : window.location.origin);
+        }, reducedMotion ? 0 : 90); // Allow the press feedback to be seen before the crossfade.
+        return;
+      }
+      welcome.hidden = true;
+      destination.hidden = false;
+      document.querySelector("#goBack").focus({ preventScroll: true });
+    });
+    document.querySelector("#goBack").addEventListener("click", () => {
+      destination.hidden = true;
+      welcome.hidden = false;
+      isLeaving = false;
+      getStartedButton.classList.remove("is-leaving");
+      replayMotion();
+      replayButton.focus({ preventScroll: true });
+    });
+  </script>
+</body>
+</html>

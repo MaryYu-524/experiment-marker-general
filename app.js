@@ -2041,6 +2041,102 @@ completeApplyCalibration.addEventListener("click", () => {
 completeClearCalibration.addEventListener("click", clearCalibration);
 
 /* =========================================================
+   GENERAL WELCOME · first use, never interrupt RUNNING/COMPLETE
+   This flag stores ONLY whether onboarding was seen, not case data.
+   ========================================================= */
+const WELCOME_SEEN_KEY = "experiment-marker-general-welcome-v1-seen";
+const welcomeGate = document.querySelector("#welcomeGate");
+const welcomeFrame = document.querySelector("#welcomeFrame");
+
+function markWelcomeSeen() {
+    try { localStorage.setItem(WELCOME_SEEN_KEY, "1"); }
+    catch (error) { console.warn("Welcome preference could not be saved:", error); }
+}
+
+function isWelcomeSeen() {
+    try { return localStorage.getItem(WELCOME_SEEN_KEY) === "1"; }
+    catch (error) { return false; }
+}
+
+function maybeShowWelcome(storedCase) {
+    if (!welcomeGate || !welcomeFrame) return; // A partial file update must not affect a case.
+    const isPreview = new URLSearchParams(window.location.search).get("welcome") === "preview";
+    // No introduction may conceal a live or completed experiment.
+    if (caseState.state !== "READY") return;
+
+    // Existing research data/configuration means this is not a first-time user.
+    const hasHistory = (storedCase && Boolean(storedCase.case_id ||
+        (Array.isArray(storedCase.events) && storedCase.events.length))) ||
+        libraryRecords.length > 0 || Object.keys(customPresets).length > 0 ||
+        Boolean(caseState.case_id || caseState.experiment_type || caseState.event_preset);
+
+    if (hasHistory && !isPreview) {
+        if (!isWelcomeSeen()) markWelcomeSeen();
+        return;
+    }
+    if (isWelcomeSeen() && !isPreview) return;
+
+    // Load the Welcome document only when actually needed.
+    welcomeGate.hidden = false;
+    document.body.classList.add("welcome-visible");
+    welcomeFrame.src = "./welcome.html";
+}
+
+let welcomeExitInProgress = false;
+
+function finishWelcomeExit() {
+    // Do not touch persisted cases, presets, or runtime timers.
+    welcomeGate.hidden = true;
+    welcomeGate.classList.remove("is-exiting");
+    document.body.classList.remove("welcome-visible", "welcome-exiting");
+    welcomeFrame.removeAttribute("src");
+    welcomeExitInProgress = false;
+    if (caseState.state === "READY") {
+        readyView.setAttribute("tabindex", "-1");
+        readyView.focus({ preventScroll: true });
+    }
+}
+
+function exitWelcome() {
+    if (!welcomeGate || welcomeGate.hidden || welcomeExitInProgress) return;
+    welcomeExitInProgress = true; // Double clicks/messages must not restart the transition.
+    const isPreview = new URLSearchParams(window.location.search).get("welcome") === "preview";
+    if (!isPreview) markWelcomeSeen();
+
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        finishWelcomeExit();
+        return;
+    }
+
+    document.body.classList.add("welcome-exiting");
+    welcomeGate.classList.add("is-exiting");
+    let finished = false;
+    let fallbackTimer;
+    const onTransitionEnd = (event) => {
+        if (event.target === welcomeGate && event.propertyName === "opacity") finish();
+    };
+    function finish() {
+        if (finished) return;
+        finished = true;
+        welcomeGate.removeEventListener("transitionend", onTransitionEnd);
+        window.clearTimeout(fallbackTimer);
+        finishWelcomeExit();
+    }
+    welcomeGate.addEventListener("transitionend", onTransitionEnd);
+    // Guard against interrupted CSS transitions (e.g. tab backgrounding).
+    fallbackTimer = window.setTimeout(finish, 600);
+}
+
+window.addEventListener("message", (event) => {
+    const sameOrigin = event.origin === window.location.origin ||
+        (window.location.protocol === "file:" && event.origin === "null");
+    if (event.source !== welcomeFrame.contentWindow || !sameOrigin) return;
+    if (event.data && event.data.type === "experiment-marker-welcome-complete" && event.data.version === 1) {
+        exitWelcome();
+    }
+});
+
+/* =========================================================
 
    INITIALIZE
 
@@ -2053,6 +2149,13 @@ async function initializeApplication() {
         caseState = stored ? normalizeLoadedState(stored) : createInitialState();
         initializeRuntimeTimer();
         render();
+        // Welcome is nonessential: any problem here must NOT reset the loaded case.
+        try { maybeShowWelcome(stored); }
+        catch (welcomeError) {
+            console.warn("Welcome unavailable; showing the restored app:", welcomeError);
+            if (welcomeGate) welcomeGate.hidden = true;
+            document.body.classList.remove("welcome-visible");
+        }
     }
     catch (error) {
         console.error("Application initialization failed:", error);
@@ -2064,6 +2167,10 @@ async function initializeApplication() {
         caseState = createInitialState();
         initializeRuntimeTimer();
         render();
+        // If storage hydration fails, do not block the app behind onboarding.
+    }
+    finally {
+        document.body.classList.remove("app-booting");
     }
 }
 initializeClockPicker();

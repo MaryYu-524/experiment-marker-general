@@ -8,7 +8,11 @@
         <link rel="manifest" href="manifest.json">
         <link rel="stylesheet" href="style.css">
     </head>
-    <body>
+    <body class="app-booting">
+        <!-- First-use Welcome is decided AFTER restoring the persistent case. -->
+        <div id="welcomeGate" class="welcome-gate" hidden>
+            <iframe id="welcomeFrame" class="welcome-frame" title="Experiment Marker welcome" aria-label="Welcome animation"></iframe>
+        </div>
         <main class="app">
             <header class="header">
                 <div>
