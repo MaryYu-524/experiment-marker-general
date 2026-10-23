@@ -2059,24 +2059,12 @@ function isWelcomeSeen() {
 }
 
 function maybeShowWelcome(storedCase) {
-    if (!welcomeGate || !welcomeFrame) return; // A partial file update must not affect a case.
-    const isPreview = new URLSearchParams(window.location.search).get("welcome") === "preview";
-    // No introduction may conceal a live or completed experiment.
+    if (!welcomeGate || !welcomeFrame) return;
+
+    // RUNNING / COMPLETE：优先恢复实验，不显示 Welcome
     if (caseState.state !== "READY") return;
 
-    // Existing research data/configuration means this is not a first-time user.
-    const hasHistory = (storedCase && Boolean(storedCase.case_id ||
-        (Array.isArray(storedCase.events) && storedCase.events.length))) ||
-        libraryRecords.length > 0 || Object.keys(customPresets).length > 0 ||
-        Boolean(caseState.case_id || caseState.experiment_type || caseState.event_preset);
-
-    if (hasHistory && !isPreview) {
-        if (!isWelcomeSeen()) markWelcomeSeen();
-        return;
-    }
-    if (isWelcomeSeen() && !isPreview) return;
-
-    // Load the Welcome document only when actually needed.
+    // READY：每次重新加载应用都显示 Welcome
     welcomeGate.hidden = false;
     document.body.classList.add("welcome-visible");
     welcomeFrame.src = "./welcome.html";
