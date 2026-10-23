@@ -2,7 +2,7 @@
 
 
 const CACHE_NAME =
-    "experiment-marker-general-v06b";
+    "experiment-marker-general-v07";
 
 
 const APP_SHELL = [
