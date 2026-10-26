@@ -2,7 +2,7 @@
 
 
 const CACHE_NAME =
-    "experiment-marker-general-v07a1";
+    "experiment-marker-general-v08-maryho";
 
 
 const APP_SHELL = [
@@ -12,6 +12,9 @@ const APP_SHELL = [
     "./storage.js",
     "./app.js",
     "./manifest.json",
+    "./icons/maryho-180.png",
+    "./icons/maryho-192.png",
+    "./icons/maryho-512.png"
 ];
 
 
